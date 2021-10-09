@@ -102,9 +102,14 @@ resource "aws_security_group" "main" {
   }
 }
 
+variable "instances_per_subnet" {
+  type        = number
+  default     = 2
+}
 
 resource "aws_instance" "linux" {
   
+  count         = "${var.instances_per_subnet}"
   ami           = "ami-0747bdcabd34c712a" # us-east-1
   instance_type = "t2.micro"
   disable_api_termination= false
@@ -112,10 +117,14 @@ resource "aws_instance" "linux" {
   key_name              =   "NAMEKEYPAIR"
   vpc_security_group_ids  = [aws_security_group.main.id]
   
+  tags {
+    Name =  "${format("instance", count.index + 1)}"
+  }
+  
 }
 
 output "public_ip" {
-    value = "${aws_instance.linux.*.public_ip}"
+    value = "${element(aws_instance.linux.*.public_ip, count.index)}"
 }
 
 
